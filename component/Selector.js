@@ -110,7 +110,7 @@ class Selector extends HTMLElement {
         img.id = "selectorIcon";
         img.width = 20;
         img.height = 20;
-        img.src = "/component/media/Rolling.svg";
+        img.src = "./component/media/Rolling.svg";
         loading.appendChild(img);
 
         const loadingText = document.createElement('span');
