@@ -67,7 +67,7 @@ class Selector extends HTMLElement {
                 ${this.placeholder || ""}
             </div>
             <input style="display: none;line-height:1.5rem;" name="value" id="value">
-            <img style="user-select: none;" id="selectorIcon" width="20" height="20" src="/component/media/Selector.svg"/>
+            <img style="user-select: none;" id="selectorIcon" width="20" height="20" src="./component/media/Selector.svg"/>
         </div>
         <div id="selectOptionList" class="normal-list"
              style="z-index: 50;position:absolute;display: none;background-color: white;border-radius:0 0 0.6rem 0.6rem;max-height: 14rem;overflow-y: auto;">
