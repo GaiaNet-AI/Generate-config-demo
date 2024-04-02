@@ -62,8 +62,8 @@ class Selector extends HTMLElement {
             }
         </style>
         <div id="selector" tabIndex="-1" class="normal-body"
-             style="display: flex;justify-content: space-between;align-items: center;border-radius: 0.6rem;cursor: ${this.disabled ?"not-allowed" : "pointer"};${this._style}">
-            <div id="selectName" style="user-select: none;line-height:1.5rem;width: 100%;color: rgb(190,191,192);padding-right: 0.1rem;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
+             style="display: flex;justify-content: space-between;align-items: center;border-radius: 0.6rem;cursor: ${this.disabled ? "not-allowed" : "pointer"};background-color: ${this.disabled ? "#f0f0f0" : "transparent"};${this._style}">
+            <div id="selectName" style="user-select: none;height:1.5rem;line-height:1.5rem;width: 100%;color: rgb(190,191,192);padding-right: 0.1rem;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
                 ${this.placeholder || ""}
             </div>
             <input style="display: none;line-height:1.5rem;" name="value" id="value">
@@ -119,6 +119,7 @@ class Selector extends HTMLElement {
 
         function setList() {
             selector.style.cursor = "pointer";
+            selector.style.backgroundColor = "transparent";
             selectOptionList.innerHTML = ""
             let isOldList = false;
             that._list.forEach(value => {
@@ -149,7 +150,6 @@ class Selector extends HTMLElement {
                 valueItem.title = valueItem.innerText;
                 selectOptionList.appendChild(valueItem)
             })
-            console.log(that.autoSelectFirst)
             if(!isOldList){
                 if (selectedOne && that.autoSelectFirst !== "true") {
                     select.innerText = "";
@@ -190,6 +190,7 @@ class Selector extends HTMLElement {
 
         function open() {
             if (!that.disabled) {
+                syncWidth();
                 selectorIcon.style.transform = "rotate(-90deg)";
                 selector.style.borderRadius = "0.6rem 0.6rem 0 0";
                 selectOptionList.style.display = "block";

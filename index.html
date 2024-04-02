@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script type="module" src="component/Selector.js"></script>
     <style>
-        .clickButton{
-            -webkit-tap-highlight-color: rgba(0,0,0,0);
+        .clickButton {
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
             outline: none;
             text-decoration: none;
             user-select: none;
@@ -35,22 +35,36 @@
     </style>
 </head>
 <body>
-<selector-component id="modelSelector" placeholder="Choose a model to start a magical journey!"
+<div style="font-size: 1.5rem;">Model:</div>
+<selector-component id="modelSelector" style="margin-top: 0.4rem;"
+                    placeholder="Choose a model to start a magical journey!"
                     mainColor="#000"></selector-component>
-<selector-component id="fileSelector" style="margin-top: 1rem;" id="fileSelect" autoSelectFirst="true"
+<selector-component id="fileSelector" style="margin-top: 1rem;" autoSelectFirst="true"
                     placeholder="Select model file" mainColor="#000"></selector-component>
+<div style="font-size: 1.5rem;margin-top: 1rem;">Embedding:</div>
+<div style="display: flex;margin-top: 0.4rem;" id="embeddingPlace">
+    <selector-component id="embeddingSelector" style="flex:1;" placeholder="- -" mainColor="#000"></selector-component>
+    <div id="embeddingBlock" style="margin-left: 0.8rem;flex:1;display: none;">
+        <selector-component id="embeddingFileSelector" autoSelectFirst="true"
+                            placeholder="Select embedding file" mainColor="#000"></selector-component>
+    </div>
+</div>
 <div style="display: none;margin-top: 1rem;" id="config">
     <div style="display: flex;justify-content: space-between;align-items: center;font-size: 1.5rem;">
         <div>Config:</div>
-        <div onclick="saveObjectAsJSON()" style="padding: 0.5rem 1.5rem;border: 1px solid black;border-radius: 0.5rem;" class="clickButton">download config.json</div>
+        <div onclick="saveObjectAsJSON()" style="padding: 0.5rem 1.5rem;border: 1px solid black;border-radius: 0.5rem;"
+             class="clickButton">download config.json
+        </div>
     </div>
     <div style="position: relative;">
-        <img onclick="copyJSON()" style="position: absolute;user-select: none;top:1.5rem;right: 1.5rem;" class="copy" id="copyIcon" width="18" height="18" src="./media/Copy.svg"/>
+        <img onclick="copyJSON()" style="position: absolute;user-select: none;top:1.5rem;right: 1.5rem;" class="copy"
+             id="copyIcon" width="18" height="18" src="./media/Copy.svg"/>
         <pre style="background-color: #f4f4f4;padding: 10px;border-radius: 0.4rem;overflow-x: auto;"
              id="configData"></pre>
     </div>
     <span id="success" style="color: mediumseagreen;display: none;">Copy Success!</span>
-    <span id="error" style="color: darkred;display: none;">Copying failed, you can try clicking the download button!</span>
+    <span id="error"
+          style="color: darkred;display: none;">Copying failed, you can try clicking the download button!</span>
 </div>
 
 <script>
@@ -58,15 +72,23 @@
     let limit = 10
     let configData
     let modelList = []
+    let embeddingList = []
+    let haveNext = true
     let selectedModel
+    let selectedModelFile
+    let selectedEmbedding
+    let selectedEmbeddingFile
 
     const modelSelector = document.getElementById("modelSelector");
     const fileSelector = document.getElementById("fileSelector");
+    const embeddingSelector = document.getElementById("embeddingSelector");
+    const embeddingBlock = document.getElementById("embeddingBlock");
+    const embeddingFileSelector = document.getElementById("embeddingFileSelector");
     const configPlace = document.getElementById("config");
     const configFilePlace = document.getElementById("configData");
 
     function getModels() {
-        if (modelList.length % limit === 0) {
+        if (haveNext) {
             fetch(`https://code.flows.network/webhook/DsbnEK45sK3NUzFUyZ9C/models?status=published&trace_status=tracing&order=most_likes&offset=${offset}&limit=${limit}`)
                 .then(response => {
                     if (!response.ok) {
@@ -76,9 +98,21 @@
                 })
                 .then(data => {
                     if (data.length > 0) {
-                        modelList = [...modelList, ...data]
+                        if (data.length < limit) {
+                            haveNext = false;
+                        }
+                        data.forEach(item => {
+                            if (item.model_type === "embedding") {
+                                embeddingList.push(item);
+                            } else {
+                                modelList.push(item);
+                            }
+                        })
                         modelSelector.list = modelList
+                        embeddingSelector.list = embeddingList
                         offset += limit
+                    } else {
+                        haveNext = false;
                     }
                 })
                 .catch(error => {
@@ -88,7 +122,6 @@
         } else {
             return false;
         }
-
     }
 
     modelSelector.queryMore = getModels;
@@ -97,48 +130,83 @@
         if (data) {
             selectedModel = data;
             fileSelector.disabled = false;
+            embeddingSelector.disabled = false;
             fileSelector.list = data.files;
         }
     }
 
     modelSelector.changeCallBack = selectModel;
 
-    function generateConfig(data) {
+    function checkValue(data) {
+        if(data) {
+            return data;
+        }else {
+            return "";
+        }
+    }
+
+    function generateConfig() {
+        configData = JSON.stringify({
+            "description": selectedModel ? checkValue(selectedModel.summary) : "",
+            "public_url": "",
+            "chat": selectedModelFile ? checkValue(selectedModelFile.hf_download_url) : "",
+            "prompt_template": selectedModel ? checkValue(selectedModel.prompt_template) : "",
+            "reverse_prompt": selectedModel ? checkValue(selectedModel.reverse_prompt) : "",
+            "chat_ctx_size": selectedModel ? checkValue(selectedModel.context_size) : "",
+            "embedding": selectedEmbeddingFile ? checkValue(selectedEmbeddingFile.hf_download_url) : "",
+            "embedding_ctx_size": selectedEmbedding ? checkValue(selectedEmbedding.context_size) : "",
+            "snapshot": "",
+            "domain": "gaianet.xyz",
+            "llamaedge_port": "8080"
+        }, null, 4)
+        configPlace.style.display = "block";
+        configFilePlace.innerText = configData;
+    }
+
+    function setModelFile(data) {
         if (data) {
-            configData = JSON.stringify({
-                "description": selectedModel.author.description,
-                "public_url": "",
-                "chat": data.hf_download_url,
-                "prompt_template": selectedModel.prompt_template,
-                "reverse_prompt": selectedModel.reverse_prompt,
-                "chat_ctx_size": selectedModel.context_size,
-                "embedding": "",
-                "embedding_ctx_size": "",
-                "snapshot": "",
-                "domain": "gaianet.xyz",
-                "llamaedge_port": "8080"
-            }, null, 4)
-            configPlace.style.display = "block";
-            configFilePlace.innerText = configData;
+            selectedModelFile = data;
+            generateConfig();
         }
     }
 
     fileSelector.disabled = true;
-    fileSelector.changeCallBack = generateConfig;
+    fileSelector.changeCallBack = setModelFile;
+
+    function setEmbedding(data) {
+        if (data) {
+            selectedEmbedding = data;
+            embeddingBlock.style.display = "block";
+            embeddingFileSelector.list = data.files;
+            generateConfig();
+        }
+    }
+    embeddingSelector.disabled = true;
+    embeddingSelector.changeCallBack = setEmbedding;
+
+    function setEmbeddingFile(data) {
+        if (data) {
+            selectedEmbeddingFile = data;
+            generateConfig();
+        }
+    }
+
+    embeddingFileSelector.changeCallBack = setEmbeddingFile;
+
 
     function copyJSON() {
-        navigator.clipboard.writeText(configData).then(function() {
+        navigator.clipboard.writeText(configData).then(function () {
             const success = document.getElementById("success")
             success.style.display = "inline";
-            setTimeout(()=>{
+            setTimeout(() => {
                 success.style.display = "none";
-            },2000)
-        }, function(err) {
+            }, 2000)
+        }, function (err) {
             const error = document.getElementById("error")
             error.style.display = "inline";
-            setTimeout(()=>{
+            setTimeout(() => {
                 error.style.display = "none";
-            },2000)
+            }, 2000)
             console.log(err)
         });
     }
