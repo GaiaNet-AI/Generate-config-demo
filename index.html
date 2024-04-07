@@ -41,6 +41,11 @@
                     mainColor="#000"></selector-component>
 <selector-component id="fileSelector" style="margin-top: 1rem;" autoSelectFirst="true"
                     placeholder="Select model file" mainColor="#000"></selector-component>
+<div style="font-size: 1.5rem;margin-top: 1rem;">Prompt:</div>
+<div style="display: flex;flex-direction: column;margin-top: 0.4rem;" id="promptPlace">
+    <textarea disabled id="systemInput" style="line-height: 1.5rem;padding: 0.8rem 1rem;border-radius:0.6rem;border:1px solid black;" placeholder="System prompt"></textarea>
+    <textarea disabled id="ragInput" style="line-height: 1.5rem;padding: 0.8rem 1rem;border-radius:0.6rem;border:1px solid black;;margin-top: 1rem;" placeholder="Rag prompt"></textarea>
+</div>
 <div style="font-size: 1.5rem;margin-top: 1rem;">Embedding:</div>
 <div style="display: flex;margin-top: 0.4rem;" id="embeddingPlace">
     <selector-component id="embeddingSelector" style="flex:1;" placeholder="- -" mainColor="#000"></selector-component>
@@ -86,6 +91,8 @@
     const embeddingFileSelector = document.getElementById("embeddingFileSelector");
     const configPlace = document.getElementById("config");
     const configFilePlace = document.getElementById("configData");
+    const systemInput = document.getElementById("systemInput");
+    const ragInput = document.getElementById("ragInput");
 
     function getModels() {
         if (haveNext) {
@@ -129,6 +136,8 @@
     function selectModel(data) {
         if (data) {
             selectedModel = data;
+            systemInput.disabled = false;
+            ragInput.disabled = false;
             fileSelector.disabled = false;
             embeddingSelector.disabled = false;
             fileSelector.list = data.files;
@@ -145,6 +154,10 @@
         }
     }
 
+    systemInput.addEventListener("input",generateConfig)
+
+    ragInput.addEventListener("input",generateConfig)
+
     function generateConfig() {
         configData = JSON.stringify({
             "description": selectedModel ? checkValue(selectedModel.summary) : "",
@@ -153,9 +166,11 @@
             "prompt_template": selectedModel ? checkValue(selectedModel.prompt_template) : "",
             "reverse_prompt": selectedModel ? checkValue(selectedModel.reverse_prompt) : "",
             "chat_ctx_size": selectedModel ? checkValue(selectedModel.context_size) : "",
+            "system_prompt": systemInput.value,
             "embedding": selectedEmbeddingFile ? checkValue(selectedEmbeddingFile.hf_download_url) : "",
             "embedding_ctx_size": selectedEmbedding ? checkValue(selectedEmbedding.context_size) : "",
             "snapshot": "",
+            "rag_prompt": ragInput.value,
             "domain": "gaianet.xyz",
             "llamaedge_port": "8080"
         }, null, 4)

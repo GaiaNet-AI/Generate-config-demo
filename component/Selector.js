@@ -62,7 +62,7 @@ class Selector extends HTMLElement {
             }
         </style>
         <div id="selector" tabIndex="-1" class="normal-body"
-             style="display: flex;justify-content: space-between;align-items: center;border-radius: 0.6rem;cursor: ${this.disabled ? "not-allowed" : "pointer"};background-color: ${this.disabled ? "#f0f0f0" : "transparent"};${this._style}">
+             style="display: flex;justify-content: space-between;align-items: center;border-radius: 0.6rem;cursor: ${this.disabled ? "not-allowed" : "pointer"};background-color: ${this.disabled ? "light-dark(rgba(239, 239, 239, 0.3), rgba(59, 59, 59, 0.3));" : "transparent"};${this._style}">
             <div id="selectName" style="user-select: none;height:1.5rem;line-height:1.5rem;width: 100%;color: rgb(190,191,192);padding-right: 0.1rem;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
                 ${this.placeholder || ""}
             </div>
