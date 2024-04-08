@@ -43,8 +43,12 @@
                     placeholder="Select model file" mainColor="#000"></selector-component>
 <div style="font-size: 1.5rem;margin-top: 1rem;">Prompt:</div>
 <div style="display: flex;flex-direction: column;margin-top: 0.4rem;" id="promptPlace">
-    <textarea disabled id="systemInput" style="line-height: 1.5rem;padding: 0.8rem 1rem;border-radius:0.6rem;border:1px solid black;" placeholder="System prompt"></textarea>
-    <textarea disabled id="ragInput" style="line-height: 1.5rem;padding: 0.8rem 1rem;border-radius:0.6rem;border:1px solid black;;margin-top: 1rem;" placeholder="Rag prompt"></textarea>
+    <textarea disabled id="systemInput"
+              style="line-height: 1.5rem;padding: 0.8rem 1rem;border-radius:0.6rem;border:1px solid black;"
+              placeholder="System prompt"></textarea>
+    <textarea disabled id="ragInput"
+              style="line-height: 1.5rem;padding: 0.8rem 1rem;border-radius:0.6rem;border:1px solid black;;margin-top: 1rem;"
+              placeholder="Rag prompt"></textarea>
 </div>
 <div style="font-size: 1.5rem;margin-top: 1rem;">Embedding:</div>
 <div style="display: flex;margin-top: 0.4rem;" id="embeddingPlace">
@@ -54,6 +58,15 @@
                             placeholder="Select embedding file" mainColor="#000"></selector-component>
     </div>
 </div>
+<div style="font-size: 1.5rem;margin-top: 1rem;">Dataset:</div>
+<div style="display: flex;margin-top: 0.4rem;" id="datasetPlace">
+    <selector-component id="datasetSelector" style="flex:1;" placeholder="- -" mainColor="#000"></selector-component>
+    <div id="datasetBlock" style="margin-left: 0.8rem;flex:1;display: none;">
+        <selector-component id="datasetFileSelector" autoSelectFirst="true"
+                            placeholder="Select dataset file" mainColor="#000"></selector-component>
+    </div>
+</div>
+
 <div style="display: none;margin-top: 1rem;" id="config">
     <div style="display: flex;justify-content: space-between;align-items: center;font-size: 1.5rem;">
         <div>Config:</div>
@@ -73,6 +86,9 @@
 </div>
 
 <script>
+    const HFOrg = "gaianet"
+    const datasetDownloadLink = "https://huggingface.co/datasets/gaianet/paris/resolve/main/"
+
     let offset = 0
     let limit = 10
     let configData
@@ -83,12 +99,16 @@
     let selectedModelFile
     let selectedEmbedding
     let selectedEmbeddingFile
+    let selectedDatasetFile
 
     const modelSelector = document.getElementById("modelSelector");
     const fileSelector = document.getElementById("fileSelector");
     const embeddingSelector = document.getElementById("embeddingSelector");
     const embeddingBlock = document.getElementById("embeddingBlock");
     const embeddingFileSelector = document.getElementById("embeddingFileSelector");
+    const datasetSelector = document.getElementById("datasetSelector");
+    const datasetFileSelector = document.getElementById("datasetFileSelector");
+    const datasetBlock = document.getElementById("datasetBlock");
     const configPlace = document.getElementById("config");
     const configFilePlace = document.getElementById("configData");
     const systemInput = document.getElementById("systemInput");
@@ -131,6 +151,19 @@
         }
     }
 
+    function getHFDataset() {
+        fetch(`https://huggingface.co/api/datasets?author=${HFOrg}`).then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        }).then(data => {
+            datasetSelector.list = data.map(item => {
+                return {name: item.id.split("/")[1], ...item}
+            });
+        })
+    }
+
     modelSelector.queryMore = getModels;
 
     function selectModel(data) {
@@ -140,6 +173,8 @@
             ragInput.disabled = false;
             fileSelector.disabled = false;
             embeddingSelector.disabled = false;
+            datasetSelector.disabled = false;
+            getHFDataset();
             fileSelector.list = data.files;
         }
     }
@@ -147,16 +182,16 @@
     modelSelector.changeCallBack = selectModel;
 
     function checkValue(data) {
-        if(data) {
+        if (data) {
             return data;
-        }else {
+        } else {
             return "";
         }
     }
 
-    systemInput.addEventListener("input",generateConfig)
+    systemInput.addEventListener("input", generateConfig)
 
-    ragInput.addEventListener("input",generateConfig)
+    ragInput.addEventListener("input", generateConfig)
 
     function generateConfig() {
         configData = JSON.stringify({
@@ -169,7 +204,7 @@
             "system_prompt": systemInput.value,
             "embedding": selectedEmbeddingFile ? checkValue(selectedEmbeddingFile.hf_download_url) : "",
             "embedding_ctx_size": selectedEmbedding ? checkValue(selectedEmbedding.context_size) : "",
-            "snapshot": "",
+            "snapshot": selectedDatasetFile ? checkValue(datasetDownloadLink + selectedDatasetFile.name) : "",
             "rag_prompt": ragInput.value,
             "domain": "gaianet.xyz",
             "llamaedge_port": "8080"
@@ -196,6 +231,7 @@
             generateConfig();
         }
     }
+
     embeddingSelector.disabled = true;
     embeddingSelector.changeCallBack = setEmbedding;
 
@@ -208,6 +244,41 @@
 
     embeddingFileSelector.changeCallBack = setEmbeddingFile;
 
+    function setDataset(selectDataSet) {
+        datasetFileSelector.list = [];
+        if (selectDataSet) {
+            datasetBlock.style.display = "block";
+            fetch(`https://huggingface.co/api/datasets/${selectDataSet.id}`).then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            }).then(data => {
+                if (data && data.siblings) {
+                    let datasetList = []
+                    data.siblings.forEach(obj => {
+                        if (obj.rfilename.endsWith('.snapshot')) {
+                            datasetList.push({name: obj.rfilename})
+                        }
+                    });
+                    datasetFileSelector.list = datasetList;
+                }
+            })
+        }
+    }
+
+    datasetSelector.disabled = true;
+    datasetSelector.changeCallBack = setDataset;
+
+    function setDatasetFile(data) {
+        console.log(data)
+        if (data) {
+            selectedDatasetFile = data;
+            generateConfig();
+        }
+    }
+
+    datasetFileSelector.changeCallBack = setDatasetFile;
 
     function copyJSON() {
         navigator.clipboard.writeText(configData).then(function () {
@@ -222,7 +293,6 @@
             setTimeout(() => {
                 error.style.display = "none";
             }, 2000)
-            console.log(err)
         });
     }
 
