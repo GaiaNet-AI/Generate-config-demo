@@ -36,11 +36,15 @@
 </head>
 <body>
 <div style="font-size: 1.5rem;">Model:</div>
-<selector-component id="modelSelector" style="margin-top: 0.4rem;"
-                    placeholder="Choose a model to start a magical journey!"
-                    mainColor="#000"></selector-component>
-<selector-component id="fileSelector" style="margin-top: 1rem;" autoSelectFirst="true"
-                    placeholder="Select model file" mainColor="#000"></selector-component>
+<div style="display: flex;margin-top: 0.4rem;" id="modelPlace">
+    <selector-component id="modelSelector" style="flex:1;"
+                        placeholder="Choose a model to start a magical journey!"
+                        mainColor="#000"></selector-component>
+    <div id="modelBlock" style="margin-left: 0.8rem;flex:1;display: none;">
+        <selector-component id="fileSelector" autoSelectFirst="true"
+                            placeholder="Select model file" mainColor="#000"></selector-component>
+    </div>
+</div>
 <div style="font-size: 1.5rem;margin-top: 1rem;">Prompt:</div>
 <div style="display: flex;flex-direction: column;margin-top: 0.4rem;" id="promptPlace">
     <textarea disabled id="systemInput"
@@ -103,6 +107,7 @@
 
     const modelSelector = document.getElementById("modelSelector");
     const fileSelector = document.getElementById("fileSelector");
+    const modelBlock = document.getElementById("modelBlock");
     const embeddingSelector = document.getElementById("embeddingSelector");
     const embeddingBlock = document.getElementById("embeddingBlock");
     const embeddingFileSelector = document.getElementById("embeddingFileSelector");
@@ -171,6 +176,7 @@
             selectedModel = data;
             systemInput.disabled = false;
             ragInput.disabled = false;
+            modelBlock.style.display = "block";
             fileSelector.disabled = false;
             embeddingSelector.disabled = false;
             datasetSelector.disabled = false;
@@ -220,7 +226,6 @@
         }
     }
 
-    fileSelector.disabled = true;
     fileSelector.changeCallBack = setModelFile;
 
     function setEmbedding(data) {
