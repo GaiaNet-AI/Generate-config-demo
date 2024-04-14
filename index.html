@@ -200,6 +200,8 @@
     ragInput.addEventListener("input", generateConfig)
 
     function generateConfig() {
+        console.log(selectedEmbeddingFile)
+        console.log(selectedEmbedding)
         configData = JSON.stringify({
             "description": selectedModel ? checkValue(selectedModel.summary) : "",
             "public_url": "",
@@ -209,6 +211,7 @@
             "chat_ctx_size": selectedModel ? checkValue(selectedModel.context_size) : "",
             "system_prompt": systemInput.value,
             "embedding": selectedEmbeddingFile ? checkValue(selectedEmbeddingFile.hf_download_url) : "",
+            "embedding_collection_name": "default",
             "embedding_ctx_size": selectedEmbedding ? checkValue(selectedEmbedding.context_size) : "",
             "snapshot": selectedDatasetFile ? checkValue(datasetDownloadLink + selectedDatasetFile.name) : "",
             "rag_prompt": ragInput.value,
