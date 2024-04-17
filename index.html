@@ -45,13 +45,14 @@
                             placeholder="Select model file" mainColor="#000"></selector-component>
     </div>
 </div>
-<div style="font-size: 1.5rem;margin-top: 1rem;">Prompt:</div>
-<div style="display: flex;flex-direction: column;margin-top: 0.4rem;" id="promptPlace">
+<div style="display: flex;flex-direction: column;" id="promptPlace">
+    <div style="font-size: 1.5rem;margin-top: 1rem;">System prompt:</div>
     <textarea disabled id="systemInput"
-              style="line-height: 1.5rem;padding: 0.8rem 1rem;border-radius:0.6rem;border:1px solid black;"
+              style="margin-top:0.4rem;line-height: 1.5rem;padding: 0.8rem 1rem;border-radius:0.6rem;border:1px solid black;"
               placeholder="System prompt"></textarea>
+    <div style="font-size: 1.5rem;margin-top: 1rem;">Rag prompt:</div>
     <textarea disabled id="ragInput"
-              style="line-height: 1.5rem;padding: 0.8rem 1rem;border-radius:0.6rem;border:1px solid black;;margin-top: 1rem;"
+              style="margin-top:0.4rem;line-height: 1.5rem;padding: 0.8rem 1rem;border-radius:0.6rem;border:1px solid black;"
               placeholder="Rag prompt"></textarea>
 </div>
 <div style="font-size: 1.5rem;margin-top: 1rem;">Embedding:</div>
@@ -64,7 +65,8 @@
 </div>
 <div style="font-size: 1.5rem;margin-top: 1rem;">Dataset:</div>
 <div style="display: flex;margin-top: 0.4rem;" id="datasetPlace">
-    <selector-component id="datasetSelector" style="flex:1;" placeholder="- -" mainColor="#000"></selector-component>
+    <selector-component id="datasetSelector" autoSelectFirst="true" style="flex:1;" placeholder="- -"
+                        mainColor="#000"></selector-component>
     <div id="datasetBlock" style="margin-left: 0.8rem;flex:1;display: none;">
         <selector-component id="datasetFileSelector" autoSelectFirst="true"
                             placeholder="Select dataset file" mainColor="#000"></selector-component>
@@ -179,6 +181,7 @@
             modelBlock.style.display = "block";
             fileSelector.disabled = false;
             embeddingSelector.disabled = false;
+            embeddingSelector.defaultValue = "second-state/All-MiniLM-L6-v2-Embedding-GGUF";
             datasetSelector.disabled = false;
             getHFDataset();
             fileSelector.list = data.files;
@@ -200,21 +203,19 @@
     ragInput.addEventListener("input", generateConfig)
 
     function generateConfig() {
-        console.log(selectedEmbeddingFile)
-        console.log(selectedEmbedding)
         configData = JSON.stringify({
+            "address": "",
             "description": selectedModel ? checkValue(selectedModel.summary) : "",
-            "public_url": "",
             "chat": selectedModelFile ? checkValue(selectedModelFile.hf_download_url) : "",
             "prompt_template": selectedModel ? checkValue(selectedModel.prompt_template) : "",
             "reverse_prompt": selectedModel ? checkValue(selectedModel.reverse_prompt) : "",
             "chat_ctx_size": selectedModel ? checkValue(selectedModel.context_size) : "",
-            "system_prompt": systemInput.value,
+            "system_prompt": systemInput.value || "You are a helpful, respectful and honest assistant. Always answer accurately, while being safe.",
             "embedding": selectedEmbeddingFile ? checkValue(selectedEmbeddingFile.hf_download_url) : "",
             "embedding_collection_name": "default",
-            "embedding_ctx_size": selectedEmbedding ? checkValue(selectedEmbedding.context_size) : "",
             "snapshot": selectedDatasetFile ? checkValue(datasetDownloadLink + selectedDatasetFile.name) : "",
-            "rag_prompt": ragInput.value,
+            "embedding_ctx_size": selectedEmbedding ? checkValue(selectedEmbedding.context_size) : "",
+            "rag_prompt": ragInput.value || "Use the following pieces of context to answer the user's question.\nIf you don't know the answer, just say that you don't know, don't try to make up an answer.\n----------------\n",
             "domain": "gaianet.xyz",
             "llamaedge_port": "8080"
         }, null, 4)
@@ -279,7 +280,6 @@
     datasetSelector.changeCallBack = setDataset;
 
     function setDatasetFile(data) {
-        console.log(data)
         if (data) {
             selectedDatasetFile = data;
             generateConfig();

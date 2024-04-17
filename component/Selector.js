@@ -2,6 +2,8 @@ class Selector extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({mode: 'open'});
+        this._list = [];
+        this._defaultValue = "";
         this.mainColor = this.getAttribute('mainColor');
         this.placeholder = this.getAttribute('placeholder');
         this._style = this.getAttribute('style');
@@ -11,6 +13,11 @@ class Selector extends HTMLElement {
     set list(value) {
         this._list = value;
         this.dispatchEvent(new CustomEvent('setList'));
+    }
+
+    set defaultValue(value) {
+        this._defaultValue = value;
+        this.dispatchEvent(new CustomEvent('setValue'));
     }
 
     get value() {
@@ -100,6 +107,10 @@ class Selector extends HTMLElement {
             setList();
         });
 
+        this.addEventListener('setValue', () => {
+            setValue();
+        });
+
         const loading = document.createElement('span');
         loading.id = "loading";
         loading.style.textAlign = "center";
@@ -150,14 +161,14 @@ class Selector extends HTMLElement {
                 valueItem.title = valueItem.innerText;
                 selectOptionList.appendChild(valueItem)
             })
-            if(!isOldList){
+            if (!isOldList) {
                 if (selectedOne && that.autoSelectFirst !== "true") {
                     select.innerText = "";
                     selectedOne = undefined;
                     if (that.changeCallBack) {
                         that.changeCallBack()
                     }
-                }else if(that.autoSelectFirst === "true" && that._list.length > 0){
+                } else if (that.autoSelectFirst === "true" && that._list.length > 0) {
                     setValue(that._list[0].id || that._list[0].name);
                     if (that.changeCallBack) {
                         that.changeCallBack(that._list[0])
@@ -222,6 +233,9 @@ class Selector extends HTMLElement {
 
         function setValue(value) {
             select.style.color = "black"
+            if (that._defaultValue && !value) {
+                value = that._defaultValue
+            }
             const divs = selectOptionList.querySelectorAll('div');
             const oldSelected = selectOptionList.querySelector(".selectedOne");
             if (oldSelected) {
@@ -234,24 +248,25 @@ class Selector extends HTMLElement {
                     select.innerText = div.innerText;
                 }
             }
+            selectedOne = that._list.find(item => {
+                if (item.id && item.id === value) {
+                    return true;
+                } else if (!item.id && item.name && item.name === value) {
+                    return true;
+                }
+            })
+            if (that.changeCallBack) {
+                that.changeCallBack(selectedOne)
+            }
         }
 
         function selectValue(e) {
             if (e.target.tagName === 'DIV' && e.target.id && e.target.id !== "selectOptionList") {
                 const thisName = e.target.innerText
                 const thisValue = e.target.id
-                selectedOne = that._list.find(item => {
-                    if (item.id && item.id === thisValue) {
-                        return true;
-                    } else if (!item.id && item.name && item.name === thisName) {
-                        return true;
-                    }
-                })
                 setValue(thisValue)
                 syncWidth()
-                if (that.changeCallBack) {
-                    that.changeCallBack(selectedOne)
-                }
+
             }
         }
 
