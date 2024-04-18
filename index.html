@@ -144,6 +144,9 @@
                         })
                         modelSelector.list = modelList
                         embeddingSelector.list = embeddingList
+                        if(offset===0){
+                            modelSelector.defaultValue = "TheBloke/Llama-2-7B-Chat-GGUF";
+                        }
                         offset += limit
                     } else {
                         haveNext = false;
@@ -185,10 +188,12 @@
             datasetSelector.disabled = false;
             getHFDataset();
             fileSelector.list = data.files;
+            fileSelector.defaultValue = "llama-2-7b-chat.Q5_K_M.gguf";
         }
     }
 
     modelSelector.changeCallBack = selectModel;
+    getModels();
 
     function checkValue(data) {
         if (data) {
